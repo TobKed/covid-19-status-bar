@@ -70,6 +70,16 @@ class EventTypeMenuItem(rumps.MenuItem):
         self.event_type = event_type
 
 
+class TimeTypeMenuItem(rumps.MenuItem):
+    def __init__(self, *args, **kwargs):
+        time_type = None
+        if "time_type" in kwargs:
+            time_type = kwargs.pop("time_type")
+
+        super().__init__(*args, **kwargs)
+        self.time_type = time_type
+
+
 class AwesomeStatusBarApp(rumps.App):
     APP_NAME = "Covid"
     DEFAULT_COUNTRY = Country("Poland", "poland", "PL")
@@ -90,7 +100,10 @@ class AwesomeStatusBarApp(rumps.App):
         self.menu_event_types = rumps.MenuItem(title="Event type")
         self.update_event_type_selection()
 
-        self.menu = [self.menu_event_types, self.menu_countries]
+        self.menu_time_types = rumps.MenuItem(title="Time type")
+        self.update_time_type_selection()
+
+        self.menu = [self.menu_event_types, self.menu_time_types, self.menu_countries]
 
     @property
     def countries_list(self) -> List[Country]:
@@ -156,7 +169,7 @@ class AwesomeStatusBarApp(rumps.App):
                 continue
             menu_item = EventTypeMenuItem(
                 title="%s" % event_type.value,
-                callback=self.menu_event_item_callback,
+                callback=self.menu_event_type_item_callback,
                 event_type=event_type,
             )
             menu_item.state = (
@@ -164,11 +177,35 @@ class AwesomeStatusBarApp(rumps.App):
             )
             self.menu_event_types.add(menu_item)
 
-    def menu_event_item_callback(
+    def menu_event_type_item_callback(
         self, single_event_menu_item: EventTypeMenuItem
     ) -> None:
         self._selected_statistics_event_type = single_event_menu_item.event_type
         self.update_event_type_selection()
+        self.update_data()
+
+    def update_time_type_selection(self) -> None:
+        for _, time_type in StatisticsTimeType.__members__.items():
+            if time_type.value in self.menu_time_types:
+                self.menu_time_types[time_type.value].state = (
+                    1 if time_type == self._selected_statistics_time_type else 0
+                )
+                continue
+            menu_item = TimeTypeMenuItem(
+                title="%s" % time_type.value,
+                callback=self.menu_time_type_item_callback,
+                time_type=time_type,
+            )
+            menu_item.state = (
+                1 if time_type == self._selected_statistics_time_type else 0
+            )
+            self.menu_time_types.add(menu_item)
+
+    def menu_time_type_item_callback(
+        self, single_time_type_menu_item: TimeTypeMenuItem
+    ) -> None:
+        self._selected_statistics_time_type = single_time_type_menu_item.time_type
+        self.update_time_type_selection()
         self.update_data()
 
     @rumps.timer(600)
