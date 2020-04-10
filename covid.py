@@ -1,8 +1,21 @@
 from collections import defaultdict
+from enum import Enum
 from typing import Dict, List, Optional
 
 import requests
 import rumps
+
+
+class StatisticsTimeType(Enum):
+    today = "Today"
+    total = "Total"
+
+
+class StatisticsEventType(Enum):
+    confirmed = "Confirmed"
+    deaths = "Deaths"
+    recovered = "Recovered"
+    active = "Active"
 
 
 class About(rumps.Window):
@@ -29,10 +42,11 @@ class Country:
         response.raise_for_status()
         json_data = response.json()
 
-        for key in ["Confirmed", "Deaths", "Recovered", "Active"]:
-            data["Total"][key] = json_data[-1][key]
-            data["Today"][key] = json_data[-1][key] - json_data[-2][key]
-
+        for _, key in StatisticsEventType.__members__.items():
+            data[StatisticsTimeType.total.name][key.name] = json_data[-1][key.value]
+            data[StatisticsTimeType.today.name][key.name] = (
+                json_data[-1][key.value] - json_data[-2][key.value]
+            )
         return data
 
 
@@ -58,7 +72,6 @@ class AwesomeStatusBarApp(rumps.App):
 
         self.menu_countries = rumps.MenuItem(title="Country")
         self.update_countries_selection()
-        self.update_data()
 
         self.menu = [self.menu_countries]
 
@@ -103,14 +116,20 @@ class AwesomeStatusBarApp(rumps.App):
 
     def update_data(self):
         statistics = self._selected_country.get_statistics()
-        deaths_today = statistics["Today"]["Deaths"]
-        self._update_title(value=deaths_today, time_type="Today", event_type="Deaths")
+        deaths_today = statistics[StatisticsTimeType.today.name][
+            StatisticsEventType.deaths.name
+        ]
+        self._update_title(
+            value=deaths_today,
+            time_type=StatisticsTimeType.today.name,
+            event_type=StatisticsEventType.deaths.name,
+        )
 
     def _update_title(
         self,
         value: str,
-        time_type: Optional[str] = "Today",
-        event_type: Optional[str] = "Deaths",
+        time_type: Optional[str] = StatisticsTimeType.today.name,
+        event_type: Optional[str] = StatisticsEventType.deaths.name,
     ) -> None:
         self.title = f"{self.APP_NAME} - {event_type} {time_type} in {self._selected_country.country}: {value}"
 
