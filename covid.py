@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
 
 import requests
 import rumps
@@ -31,14 +30,14 @@ class CountryMenuItem(rumps.MenuItem):
         if "country" in kwargs:
             country = kwargs.pop("country")
 
-        super().__init__(*args, **kwargs)
+        super(CountryMenuItem, self).__init__(*args, **kwargs)
         self.country = country
 
 
 class EventTypeMenuItem(rumps.MenuItem):
     def __init__(self, *args, **kwargs):
         event_type = kwargs.pop("event_type")
-        super().__init__(*args, **kwargs)
+        super(EventTypeMenuItem, self).__init__(*args, **kwargs)
         self.event_type = event_type
 
 
@@ -48,10 +47,10 @@ class Covid19StatusBarApp(rumps.App):
     DEFAULT_COUNTRY = "Poland"
 
     def __init__(self):
-        super().__init__(self.APP_NAME)
-        self._countries_list: Optional[List[str]] = None
-        self._selected_country: str = self.DEFAULT_COUNTRY
-        self._selected_event_type: EventType = EventType.active
+        super(Covid19StatusBarApp, self).__init__(self.APP_NAME)
+        self._countries_list = None
+        self._selected_country = self.DEFAULT_COUNTRY
+        self._selected_event_type = EventType.active
 
         self.menu_countries = rumps.MenuItem(title="Country")
         self.update_countries_selection()
@@ -63,21 +62,21 @@ class Covid19StatusBarApp(rumps.App):
 
         self.menu = [self.menu_countries, self.menu_event_types]
 
-    def __get_countries(self) -> List[str]:
-        response = requests.get(f"{self.BASE_API_URL}/countries")
+    def __get_countries(self):
+        response = requests.get("{}/countries".format(self.BASE_API_URL))
         return sorted([e["country"] for e in response.json()])
 
-    def get_country_data(self, country: str) -> Dict[str, Any]:
-        response = requests.get(f"{self.BASE_API_URL}/countries/{country}")
+    def get_country_data(self, country):
+        response = requests.get("{}/countries/{}".format(self.BASE_API_URL, country))
         return response.json()
 
     @property
-    def countries_list(self) -> List[str]:
+    def countries_list(self):
         if self._countries_list is None:
             self._countries_list = self.__get_countries()
         return self._countries_list
 
-    def update_countries_selection(self) -> None:
+    def update_countries_selection(self):
         for country in self.countries_list:
             if country in self.menu_countries:
                 self.menu_countries[country].state = (
@@ -90,9 +89,7 @@ class Covid19StatusBarApp(rumps.App):
             menu_item.state = 1 if country == self._selected_country else 0
             self.menu_countries.add(menu_item)
 
-    def menu_country_item_callback(
-        self, single_country_menu_item: CountryMenuItem
-    ) -> None:
+    def menu_country_item_callback(self, single_country_menu_item):
         self._selected_country = single_country_menu_item.title
         self.update_countries_selection()
         self.update_data()
@@ -104,13 +101,13 @@ class Covid19StatusBarApp(rumps.App):
             event_type=self._selected_event_type.value,
         )
 
-    def _update_title(self, value: Union[str, int], event_type: str) -> None:
-        self.title = (
-            f"{self.APP_NAME} - {event_type} in {self._selected_country}: {value}"
+    def _update_title(self, value, event_type):
+        self.title = "{} - {} in {}: {}".format(
+            self.APP_NAME, event_type, self._selected_country, value
         )
 
-    def update_event_type_selection(self) -> None:
-        for _, event_type in EventType.__members__.items():
+    def update_event_type_selection(self):
+        for _, event_type in EventType.__members__.iteritems():
             if event_type.value in self.menu_event_types:
                 self.menu_event_types[event_type.value].state = (
                     1 if event_type == self._selected_event_type else 0
@@ -124,19 +121,17 @@ class Covid19StatusBarApp(rumps.App):
             menu_item.state = 1 if event_type == self._selected_event_type else 0
             self.menu_event_types.add(menu_item)
 
-    def menu_event_type_item_callback(
-        self, single_event_menu_item: EventTypeMenuItem
-    ) -> None:
+    def menu_event_type_item_callback(self, single_event_menu_item):
         self._selected_event_type = single_event_menu_item.event_type
         self.update_event_type_selection()
         self.update_data()
 
     @rumps.timer(600)
-    def update(self, _) -> None:
+    def update(self, _):
         self.update_data()
 
     @rumps.clicked("About")
-    def about(self, _) -> None:
+    def about(self, _):
         About().run()
 
 
