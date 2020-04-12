@@ -20,24 +20,21 @@ class EventType(Enum):
 
 
 class About(rumps.Window):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(title="About")
         self.default_text = "Version: 0.0.1\nAuthor: https://tobked.github.io/"
 
 
 class CountryMenuItem(rumps.MenuItem):
-    def __init__(self, *args, **kwargs):
-        country = dict()
-        if "country" in kwargs:
-            country = kwargs.pop("country")
-
+    def __init__(self, *args, **kwargs) -> None:
+        country: Dict = kwargs.pop("country")
         super().__init__(*args, **kwargs)
         self.country = country
 
 
 class EventTypeMenuItem(rumps.MenuItem):
-    def __init__(self, *args, **kwargs):
-        event_type = kwargs.pop("event_type")
+    def __init__(self, *args, **kwargs) -> None:
+        event_type: EventType = kwargs.pop("event_type")
         super().__init__(*args, **kwargs)
         self.event_type = event_type
 
@@ -47,7 +44,7 @@ class Covid19StatusBarApp(rumps.App):
     BASE_API_URL = "https://corona.lmao.ninja"
     DEFAULT_COUNTRY = "Poland"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(self.APP_NAME)
         self._countries_list: Optional[List[str]] = None
         self._selected_country: str = self.DEFAULT_COUNTRY
@@ -97,7 +94,7 @@ class Covid19StatusBarApp(rumps.App):
         self.update_countries_selection()
         self.update_data()
 
-    def update_data(self):
+    def update_data(self) -> None:
         self._data = self.get_country_data(self._selected_country)
         self._update_title(
             value=self._data[self._selected_event_type.name],
